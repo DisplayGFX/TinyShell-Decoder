@@ -98,7 +98,7 @@ int pel_recv_msg_d( unsigned char buffer[BUFSIZE + 16 + 20], unsigned char *data
         pel_errno = PEL_BAD_MSG_LENGTH;
 
         
-        puts("out of range msg according to buffsize");
+        puts("out of range msg according to buffsize(client)");
         exit( 666 );
     }
 
@@ -134,7 +134,7 @@ int pel_recv_msg_d( unsigned char buffer[BUFSIZE + 16 + 20], unsigned char *data
     {
         pel_errno = PEL_CORRUPTED_DATA;
 
-        puts("corruped block according to hmac");
+        puts("corruped block according to hmac(client)");
         exit(666);
     }
     /* increment the packet counter */
@@ -193,7 +193,7 @@ int pel_recv_msg_d_send( unsigned char buffer[BUFSIZE + 16 + 20], unsigned char 
         pel_errno = PEL_BAD_MSG_LENGTH;
 
         
-        puts("out of range msg according to buffsize");
+        puts("out of range msg according to buffsize(server)");
         exit( 666 );
     }
 
@@ -229,7 +229,7 @@ int pel_recv_msg_d_send( unsigned char buffer[BUFSIZE + 16 + 20], unsigned char 
     {
         pel_errno = PEL_CORRUPTED_DATA;
 
-        puts("corruped block according to hmac");
+        puts("corruped block according to hmac(server)");
         exit(666);
     }
     /* increment the packet counter */
