@@ -346,19 +346,22 @@ void process_file(const char* filename, const char* filename2) {
                     runshell = true;
                     shell_term = true;
                     skipsend = true;
+                    continue;
                     break;
                 case PUT_FILE:
                     printf("PUT_FILE command recv'd\n");
                     tsh_cmd = true;
+                    continue;
                     break;
                 case GET_FILE:
                     printf("GET_FILE command recv'd\n");
                     tsh_cmd = true;
+                    continue;
                     break;
                 default:
-                    puts("unknown command");
+                    //puts("unknown command");
             }
-            continue;
+            
         }
         if(tsh_cmd){
             if(runshell){
@@ -368,19 +371,28 @@ void process_file(const char* filename, const char* filename2) {
                     puts("");
                     shell_term = false;
                     shell_winsize = true;
-                    skipsend = true;
                     frame1 = len;
                     //hypothesis, I can advance 1 block at a time.
                     //each block is 36 characters, and they are all on the same line.
-                    pel_recv_msg_d( 0, &data[36], &len );
-                    ws.ws_row = ( (int) (data+36)[0] << 8 ) + (int) (data+36)[1];
-                    ws.ws_col = ( (int) (data+36)[2] << 8 ) + (int) (data+36)[3];
+                    unsigned char * nextBlock;
+                    nextBlock = &data[36];
+                    pel_recv_msg_d( 0, nextBlock, &len );
+                    ws.ws_row = ( (int) nextBlock[0] << 8 ) + (int) nextBlock[1];
+                    ws.ws_col = ( (int) nextBlock[2] << 8 ) + (int) nextBlock[3];
                     printf("Window size: %hu, %hu\n",ws.ws_row,ws.ws_col);
                     //here we go. "exec bash --login"
-                    pel_recv_msg_d( 0, &data[36*2], &len );
-                    process_data(&data[36*2], line_length/2-36,false);
-                    process_data(&data[36*2], len+2,true);
-                    exit(1);
+                    nextBlock += 36;
+                    pel_recv_msg_d( 0, nextBlock, &len );
+                    //process_data(nextBlock, line_length/2-36,false);
+                    if(memcmp("exec bash --login", &nextBlock[1], 17)){
+                        puts("starting a shell");
+                        process_data(data2, len2+2,true);
+                    } else {
+                        printf("%s","executing cmd: ");
+                        process_data(nextBlock, len+2,true);
+                    }
+                    tsh_cmd = false;
+                    continue;
                 } else if (shell_winsize) {
                     //TODO:
                     printf("%s","window size Environ Var: ");
@@ -396,10 +408,15 @@ void process_file(const char* filename, const char* filename2) {
                 puts("You arent supposed to be here");
             }
         }
-        printf("Final output(client):");
-        process_data(data, len+2,false);
-        printf("Final output(server):");
-        process_data(data2, len2+2,false);
+        if(memcmp(data,data2,len+2)){
+            process_data(data, len+2,true);
+        } else {
+            printf("Final output(client):");
+            process_data(data, len+2,true);
+            printf("Final output(server):");
+            process_data(data2, len2+2,true);
+        }
+        
     }
     
     fclose(file);
