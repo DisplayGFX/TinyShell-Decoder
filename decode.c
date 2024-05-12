@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/ioctl.h>
 
 #define LINUX 1
 #define MAX_LINE_LENGTH 1024
@@ -280,8 +281,10 @@ void process_file(const char* filename, const char* filename2) {
         
     bool chal_server = true;
 
+    struct winsize ws;
+
     //ripped from pel_server_init
-    int len, len2;
+    int len, len2, frame1;
 
     //main processing
     //each line is processed here.
@@ -314,13 +317,12 @@ void process_file(const char* filename, const char* filename2) {
             if(!chal){
                 chal_server = memcmp(challenge_d, &data2[1], 16);
             }
-            printf("Final output(server):");
-            process_data(data2, len2+2,true);
-            continue;
             
         } else {
             skipsend = false;
         }
+        //printf("input(server):");
+        //process_data(data, line_length/2,false);
         pel_recv_msg_d( 0, &data, &len );
         //process_data(data, line_length / 2);
         //the idea is to next recreate pel_recv_msg
@@ -366,6 +368,19 @@ void process_file(const char* filename, const char* filename2) {
                     puts("");
                     shell_term = false;
                     shell_winsize = true;
+                    skipsend = true;
+                    frame1 = len;
+                    //hypothesis, I can advance 1 block at a time.
+                    //each block is 36 characters, and they are all on the same line.
+                    pel_recv_msg_d( 0, &data[36], &len );
+                    ws.ws_row = ( (int) (data+36)[0] << 8 ) + (int) (data+36)[1];
+                    ws.ws_col = ( (int) (data+36)[2] << 8 ) + (int) (data+36)[3];
+                    printf("Window size: %hu, %hu\n",ws.ws_row,ws.ws_col);
+                    //here we go. "exec bash --login"
+                    pel_recv_msg_d( 0, &data[36*2], &len );
+                    process_data(&data[36*2], line_length/2-36,false);
+                    process_data(&data[36*2], len+2,true);
+                    exit(1);
                 } else if (shell_winsize) {
                     //TODO:
                     printf("%s","window size Environ Var: ");
