@@ -260,8 +260,8 @@ int pel_recv_msg_d_send( unsigned char buffer[BUFSIZE + 16 + 20], unsigned char 
 
 
 void process_file(const char* filename, const char* filename2) {
-    FILE *file = fopen(filename, "r");
-    FILE *file2 = fopen(filename2, "r");
+    FILE *client_traffic = fopen(filename, "r");
+    FILE *server_traffic = fopen(filename2, "r");
     char line[MAX_LINE_LENGTH];
     unsigned char data[MAX_LINE_LENGTH / 2];
     char line2[MAX_LINE_LENGTH];
@@ -288,7 +288,7 @@ void process_file(const char* filename, const char* filename2) {
 
     //main processing
     //each line is processed here.
-    while (fgets(line, sizeof(line), file)) {
+    while (fgets(line, sizeof(line), client_traffic)) {
         
         int line_length = strlen(line);
         if (line[line_length - 1] == '\n') {
@@ -306,7 +306,7 @@ void process_file(const char* filename, const char* filename2) {
             continue;
         }
         if(!skipsend){
-            fgets(line2, sizeof(line2), file2);
+            fgets(line2, sizeof(line2), server_traffic);
             int line2_length = strlen(line);
             if (line2[line2_length - 1] == '\n') {
                 line2[line2_length - 1] = '\0';  // Remove newline character
@@ -321,7 +321,7 @@ void process_file(const char* filename, const char* filename2) {
         } else {
             skipsend = false;
         }
-        //printf("input(server):");
+        //printf("input(server_traffic):");
         //process_data(data, line_length/2,false);
         pel_recv_msg_d( 0, &data, &len );
         //process_data(data, line_length / 2);
@@ -411,15 +411,15 @@ void process_file(const char* filename, const char* filename2) {
         if(memcmp(data,data2,len+2)){
             process_data(data, len+2,true);
         } else {
-            printf("Final output(client):");
+            printf("Final output(client_traffic):");
             process_data(data, len+2,true);
-            printf("Final output(server):");
+            printf("Final output(server_traffic):");
             process_data(data2, len2+2,true);
         }
         
     }
     
-    fclose(file);
+    fclose(client_traffic);
     return;
 }
 
