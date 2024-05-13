@@ -283,13 +283,26 @@ void process_file(const char* filename, const char* filename2) {
 
     struct winsize ws;
 
+    bool client_EOF = false;
+    bool server_EOF = false;
     //ripped from pel_server_init
     int len, len2, frame1;
 
+    char * ret;
+    int c = 0;
+    size_t c_i = 0;
     //main processing
     //each line is processed here.
-    while (fgets(line, sizeof(line), client_traffic)) {
-        
+    while (!client_EOF) {
+        c_i = 0;
+        do{
+            c = fgetc(client_traffic);
+            line[c_i] = c;
+            c_i++;
+        }while(c != '\n' && c != EOF && c_i < MAX_LINE_LENGTH);
+        if (c == EOF){
+            client_EOF = true;
+        }
         int line_length = strlen(line);
         if (line[line_length - 1] == '\n') {
             line[line_length - 1] = '\0';  // Remove newline character
@@ -306,7 +319,15 @@ void process_file(const char* filename, const char* filename2) {
             continue;
         }
         if(!skipsend){
-            fgets(line2, sizeof(line2), server_traffic);
+            c_i = 0;
+            do{
+                c = fgetc(server_traffic);
+                line2[c_i] = c;
+                c_i++;
+            }while(c != '\n' && c != EOF && c_i < MAX_LINE_LENGTH);
+            if (c == EOF){
+                server_EOF = true;
+            }
             int line2_length = strlen(line);
             if (line2[line2_length - 1] == '\n') {
                 line2[line2_length - 1] = '\0';  // Remove newline character
