@@ -391,7 +391,6 @@ void process_file(const char* filename, const char* filename2) {
                     fwrite(&data[1],sizeof(char),len+1,stdout);
                     puts("");
                     shell_term = false;
-                    shell_winsize = true;
                     frame1 = len;
                     //hypothesis, I can advance 1 block at a time.
                     //each block is 36 characters, and they are all on the same line.
@@ -431,6 +430,7 @@ void process_file(const char* filename, const char* filename2) {
         }
         if(memcmp(data,data2,len+2)){
             process_data(data, len+2,true);
+            process_data(data2, len2+2,true);
         } else {
             printf("Final output(client_traffic):");
             process_data(data, len+2,true);
